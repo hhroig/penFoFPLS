@@ -1,5 +1,13 @@
-# 1D numerical integration
-#
+#' 1D numerical integration
+#'
+#' @param argvals argument values of the function f(argvals)
+#' @param f_obs function to integrate
+#'
+#' @return a double
+#' @export
+#'
+#' @examples
+#' # Do not run
 num_int_1d <- function(argvals, f_obs) {
 
   f <- stats::splinefun(x = argvals, y = f_obs)
@@ -42,8 +50,18 @@ num_int_1d <- function(argvals, f_obs) {
 
 
 
-
-# Integrated mean square error for the evaluation of the estimated beta(q,p) FoF regression.
+#' Integrated mean square error for the evaluation of the estimated beta(q,p) FoF regression.
+#'
+#' @param beta_true true beta(q, p)
+#' @param beta_hat estimated beta(q, p)
+#' @param argvals_X argument values "p" for X(p)
+#' @param argvals_Y argument values "p" for X(q)
+#'
+#' @return a double
+#' @export
+#'
+#' @examples
+#' # Do not run
 imse_beta_ffpls_bs <- function(beta_true,
                                beta_hat,
                                argvals_X,

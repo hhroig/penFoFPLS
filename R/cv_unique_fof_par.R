@@ -129,8 +129,8 @@ cv_unique_fof_par <- function(X,
         # MSE_lambda_fold[row_lambda , i] <-
         num_int_1d(argvals = argvals_Y,
                    f_obs = colMeans( (Y_fold_test -
-                                        predict.ffpls_bs(object = res_fpls,
-                                                         newdata = X_fold_test)[, , ncomp_i]  )^2 ) )
+                                        stats::predict(object = res_fpls,
+                                                       newdata = X_fold_test)[, , ncomp_i]  )^2 ) )
 
 
 
