@@ -148,7 +148,7 @@ ffpls_bs <- function(X,
   mvpls_model <- pls::plsr(left_PLS ~ right_PLS,
                            ncomp =  ncomp,
                            method = "oscorespls",
-                           center = FALSE,
+                           center = TRUE,
                            scale = FALSE,
                            ...)
 
