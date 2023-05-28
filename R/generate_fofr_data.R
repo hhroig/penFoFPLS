@@ -5,6 +5,7 @@
 #' @param nbeta number identifying which beta(q, p) to generate
 #' @param nnodesX number of nodes to use in the generation of X
 #' @param nnodesY number of nodes to use in the generation of Y
+#' @param Rsq R^2 between the generated Y(t) and perturbed Y(t) + error.
 #'
 #' @return a list with the generate X, Y, and true beta
 #' @export
@@ -14,7 +15,7 @@
 #' generate_fofr_data(nbasisX = 7, nbasisY = 5, nbeta = 1,
 #'                    nnodesX = 100, nnodesY = 100)
 generate_fofr_data <- function(nbasisX = 7, nbasisY = 5, nbeta = 1,
-                               nnodesX = 99, nnodesY = 98) {
+                               nnodesX = 99, nnodesY = 98, Rsq = 0.9) {
 
   # number of basis to use:
   K <- nbasisX
@@ -85,40 +86,21 @@ generate_fofr_data <- function(nbasisX = 7, nbasisY = 5, nbeta = 1,
   Xmean_fd <- fda::mean.fd(X)
 
 
-  # Generate Y:
-  Y <- fda::inprod(Xc_fd, beta_fd)
+  # Generate Y clean (no noise):
+  Y_clean <- fda::inprod(Xc_fd, beta_fd)
 
-  varthY <- rep(0, length(q))
-  somme <- 0
+  # Noisy Y , approx. R^2(t) ~~ Rsq:
+  Y <- Y_clean
 
-  for(k in 1:length(q)) {
+  for (q_ind in 1:length(q)) {
 
-    somme <- 0
-    coef_phi <- rep(0,K)
+    # variance of residuals at point "q[q_ind]"
+    var_e <- (1/Rsq - 1)*stats::var(Y_clean[, q_ind])
 
-    for(i in 1:K) {
-      coef_phi[i] <- 1
-      somme <- somme + fda::inprod(  fda::fd(coef_phi, phiX), beta_fd[k]  )^{2}
-      coef_phi[i] <- 0
-    }
+    # Noisy Y:
+    Y[ , q_ind] <- Y_clean[ , q_ind] +
+      as.matrix(stats::rnorm(n = nrow(Y_clean), mean = 0, sd = sqrt(var_e)))
 
-    varthY[k] <- (1/3)*somme
-  }
-
-
-  # add error to Y(q)
-  tauxbruit <- 0.1
-  bruit <- rep(0,length(q))
-
-  Yb = Y
-
-  for (i in 1:n) {
-
-    for (k in 1:length(q)) {
-      bruit[k] <- stats::rnorm(1 , 0, sqrt(tauxbruit*varthY[k]))
-    }
-
-    Yb[i, ] <- Y[i, ] + bruit
   }
 
   # Savings:
