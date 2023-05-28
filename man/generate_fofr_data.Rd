@@ -9,7 +9,8 @@ generate_fofr_data(
   nbasisY = 5,
   nbeta = 1,
   nnodesX = 99,
-  nnodesY = 98
+  nnodesY = 98,
+  Rsq = 0.9
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ generate_fofr_data(
 \item{nnodesX}{number of nodes to use in the generation of X}
 
 \item{nnodesY}{number of nodes to use in the generation of Y}
+
+\item{Rsq}{R^2 between the generated Y(t) and perturbed Y(t) + error.}
 }
 \value{
 a list with the generate X, Y, and true beta
