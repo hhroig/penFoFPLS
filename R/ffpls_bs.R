@@ -15,8 +15,10 @@
 #' much as possible for speed. Particularly, if \code{FALSE} (default) it computes
 #' the final models using the best combination of penalties.
 #' Inspired by package \code{pls}.
-#' @param RPhi penalty matrix for the basis of X.
-#' @param RPsi penalty matrix for the basis of Y.
+#' @param RPhi matrix of inner products for the basis of X.
+#' @param RPsi matrix of inner products for the basis of Y.
+#' @param PX penalty matrix for the basis of X.
+#' @param PY penalty matrix for the basis of Y.
 #' @param ... extra arguments for \code{pls::plsr()} function.
 #'
 #' @return a fof_pls model.
@@ -39,6 +41,8 @@ ffpls_bs <- function(X,
                      stripped = FALSE,
                      RPhi = NULL,
                      RPsi = NULL,
+                     PX = NULL,
+                     PY = NULL,
                      ...
 ) {
 
@@ -104,14 +108,20 @@ ffpls_bs <- function(X,
   dorder <- 2
 
   # Penalty X(t)
-  deltaX <- diff(diag(basisobj_X$nbasis),
-                 differences = dorder) #d-order differences
-  PX <- Matrix::t(deltaX) %*% deltaX
+  if (is.null(PX)) {
+    deltaX <- diff(diag(basisobj_X$nbasis),
+                   differences = dorder) #d-order differences
+    PX <- Matrix::t(deltaX) %*% deltaX
+  }
+
 
   # Penalty Y(s)
-  deltaY <- diff(diag(basisobj_Y$nbasis),
-                 differences = dorder) #d-order differences
-  PY <- Matrix::t(deltaY) %*% deltaY
+  if (is.null(PY)) {
+    deltaY <- diff(diag(basisobj_Y$nbasis),
+                   differences = dorder) #d-order differences
+    PY <- Matrix::t(deltaY) %*% deltaY
+  }
+
 
   # Matrices LX and LY with penalty:
   # for X(t)
@@ -221,7 +231,6 @@ ffpls_bs <- function(X,
       # Estimated Y(q_1, ..., q_my)
       hat_left_PLS <- mvpls_model$fitted.values[, , h]
       Yc_hat[, , h] <- hat_left_PLS %*% LY %*% inv_RPsi %*% Matrix::t(Ybasis_eval)
-
 
     }
 

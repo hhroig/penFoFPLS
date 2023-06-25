@@ -17,8 +17,10 @@
 #' much as possible for speed. Particularly, if \code{FALSE} (default) it computes
 #' the final models using the best combination of penalties.
 #' Inspired by package \code{pls}.
-#' @param RPhi penalty matrix for the basis of X.
-#' @param RPsi penalty matrix for the basis of Y.
+#' @param RPhi matrix of inner products for the basis of X.
+#' @param RPsi matrix of inner products for the basis of Y.
+#' @param PX penalty matrix for the basis of X.
+#' @param PY penalty matrix for the basis of Y.
 #' @param ... extra arguments for \code{pls::plsr()} function.
 #'
 #' @return A list of crossvalidates erros (IMSEs) and penalties giving the minimum
@@ -45,6 +47,8 @@ cv_unique_fof_par <- function(X,
                               stripped = TRUE,
                               RPhi = NULL,
                               RPsi = NULL,
+                              PX = NULL,
+                              PY = NULL,
                               ...) {
 
   tictoc::tic("Crossvalidation")
@@ -123,6 +127,8 @@ cv_unique_fof_par <- function(X,
                              stripped = stripped,
                              RPhi = RPhi,
                              RPsi = RPsi,
+                             PX = PX,
+                             PY = PY,
                              ...      )
 
 
@@ -190,6 +196,8 @@ cv_unique_fof_par <- function(X,
                             stripped = stripped,
                             RPhi = RPhi,
                             RPsi = RPsi,
+                            PX = PX,
+                            PY = PY,
                             ...)
 
     ret <- list(

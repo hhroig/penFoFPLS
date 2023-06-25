@@ -20,6 +20,8 @@ cv_unique_fof_par(
   stripped = TRUE,
   RPhi = NULL,
   RPsi = NULL,
+  PX = NULL,
+  PY = NULL,
   ...
 )
 }
@@ -54,9 +56,13 @@ much as possible for speed. Particularly, if \code{FALSE} (default) it computes
 the final models using the best combination of penalties.
 Inspired by package \code{pls}.}
 
-\item{RPhi}{penalty matrix for the basis of X.}
+\item{RPhi}{matrix of inner products for the basis of X.}
 
-\item{RPsi}{penalty matrix for the basis of Y.}
+\item{RPsi}{matrix of inner products for the basis of Y.}
+
+\item{PX}{penalty matrix for the basis of X.}
+
+\item{PY}{penalty matrix for the basis of Y.}
 
 \item{...}{extra arguments for \code{pls::plsr()} function.}
 }
