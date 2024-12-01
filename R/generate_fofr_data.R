@@ -6,16 +6,18 @@
 #' @param nnodesX number of nodes to use in the generation of X
 #' @param nnodesY number of nodes to use in the generation of Y
 #' @param Rsq R^2 between the generated Y(t) and perturbed Y(t) + error.
+#' @param n sample size.
+#' @param n_validation additional data for validation purposes.
 #'
 #' @return a list with the generate X, Y, and true beta
 #' @export
 #'
 #' @examples
-#' # To reproduce the paper by Preda & Schiltz (2011):
 #' generate_fofr_data(nbasisX = 7, nbasisY = 5, nbeta = 1,
 #'                    nnodesX = 100, nnodesY = 100)
 generate_fofr_data <- function(nbasisX = 7, nbasisY = 5, nbeta = 1,
-                               nnodesX = 99, nnodesY = 98, Rsq = 0.9) {
+                               nnodesX = 99, nnodesY = 98, Rsq = 0.9,
+                               n = 100, n_validation = 50) {
 
   # number of basis to use:
   K <- nbasisX
@@ -32,7 +34,7 @@ generate_fofr_data <- function(nbasisX = 7, nbasisY = 5, nbeta = 1,
 
 
   # Generate X:
-  n <- 100
+  n <- n + n_validation
 
   # random coefficients for X:
   alpha <- matrix(stats::runif(n*K, -1, 1), nrow=n)
@@ -109,7 +111,16 @@ generate_fofr_data <- function(nbasisX = 7, nbasisY = 5, nbeta = 1,
   beta_true <- beta
   Xc <- t( fda::eval.fd(evalarg = p, fdobj = Xc_fd) )
 
-  out <- list(Xc = Xc, X = X, Y = Y, beta_true = beta_true)
+  n_traintest = n - n_validation
+
+  out <- list(Xc = Xc[1:n_traintest, ],
+              X = X[1:n_traintest, ],
+              Y = Y[1:n_traintest, ],
+              beta_true = beta_true,
+              Xc_val = Xc[(n_traintest+1):nrow(Xc), ],
+              X_val = X[(n_traintest+1):nrow(X), ],
+              Y_val = Y[(n_traintest+1):nrow(X), ]
+              )
 
   return(out)
 
