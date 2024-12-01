@@ -10,7 +10,9 @@ generate_fofr_data(
   nbeta = 1,
   nnodesX = 99,
   nnodesY = 98,
-  Rsq = 0.9
+  Rsq = 0.9,
+  n = 100,
+  n_validation = 50
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ generate_fofr_data(
 \item{nnodesY}{number of nodes to use in the generation of Y}
 
 \item{Rsq}{R^2 between the generated Y(t) and perturbed Y(t) + error.}
+
+\item{n}{sample size.}
+
+\item{n_validation}{additional data for validation purposes.}
 }
 \value{
 a list with the generate X, Y, and true beta
@@ -33,7 +39,6 @@ a list with the generate X, Y, and true beta
 Generate artificial data for function-on-function regression
 }
 \examples{
-# To reproduce the paper by Preda & Schiltz (2011):
 generate_fofr_data(nbasisX = 7, nbasisY = 5, nbeta = 1,
                    nnodesX = 100, nnodesY = 100)
 }
