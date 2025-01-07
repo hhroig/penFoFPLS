@@ -1,4 +1,41 @@
-
+#' Cross-Validation for Functional Partial Least Squares with Basis Selection
+#'
+#' Performs cross-validation to select the optimal number of basis functions for functional
+#' predictors and responses in a functional partial least squares (FPLS) model.
+#'
+#' @param X Matrix of predictors. Rows represent observations, and columns represent variables.
+#' @param Y Matrix of responses. Rows represent observations, and columns represent variables.
+#' @param center Logical; if `TRUE`, the data is mean-centered before fitting the model. Default is `TRUE`.
+#' @param argvals_X Vector of argument values corresponding to the functional predictors. Default is `NULL`.
+#' @param argvals_Y Vector of argument values corresponding to the functional responses. Default is `NULL`.
+#' @param num_bases_X Integer or vector specifying the number of basis functions for the predictors. Default is 20.
+#' @param num_bases_Y Integer or vector specifying the number of basis functions for the responses. Default is 20.
+#' @param fda_basis_func_X Function to create the basis functions for the predictors. Defaults to `fda::create.bspline.basis`.
+#' @param fda_basis_func_Y Function to create the basis functions for the responses. Defaults to `fda::create.bspline.basis`.
+#' @param penalty_X Numeric penalty for smoothing the predictor basis functions. Default is 0.
+#' @param penalty_Y Numeric penalty for smoothing the response basis functions. Default is 0.
+#' @param ncomp Integer specifying the maximum number of components to compute. Default is `min(10, ncol(X))`.
+#' @param folds Integer or list specifying the cross-validation folds. If an integer, it indicates the number of folds. If a list, it provides predefined fold indices. Default is 5.
+#' @param verbose Logical; if `TRUE`, progress messages are displayed during cross-validation. Default is `TRUE`.
+#' @param stripped Logical; if `TRUE`, the final model is not included in the output, only cross-validation results. Default is `TRUE`.
+#' @param ... Additional arguments passed to the `ffpls_bs` function.
+#'
+#' @return A list containing:
+#' \describe{
+#'   \item{CVEs_ncomp}{Vector of cross-validation errors for each number of components.}
+#'   \item{MSE_ncomp_fold}{Matrix of mean squared errors (MSE) for each component and fold.}
+#'   \item{best_num_bases}{Matrix indicating the best number of basis functions for predictors and responses for each component.}
+#'   \item{final_model}{The final fitted FPLS model (only included if `stripped = FALSE`).}
+#'   \item{elapsed}{Elapsed time for the cross-validation process.}
+#' }
+#'
+#' @export
+#'
+#' @importFrom foreach %dopar%
+#' @importFrom foreach %:%
+#'
+#' @examples
+#' # 1D example:
 cv_bases_fof_par <- function(X,
                              Y,
                              center = TRUE,
@@ -66,7 +103,7 @@ cv_bases_fof_par <- function(X,
                        .combine = 'c' ) %dopar%
                        {
 
-                         # MSE_lambda_fold <- matrix(NA, nrow = nrow(penalty_grid), ncol = num_folds)
+                         # MSE_lambda_fold <- matrix(NA, nrow = nrow(num_bases_grid), ncol = num_folds)
                          # for (i in 1:num_folds) {
                          #   for (row_num_bases in 1:nrow(num_bases_grid)) {
 
@@ -95,7 +132,7 @@ cv_bases_fof_par <- function(X,
                                               penalty_X = penalty_X,
                                               penalty_Y = penalty_Y,
                                               verbose = FALSE,
-                                              stripped = stripped
+                                              stripped = stripped,
                                               ...      )
 
 
@@ -118,7 +155,7 @@ cv_bases_fof_par <- function(X,
 
     # Best penalties per component:
     sel_num_bases <- which.min(CVEs_ncomp_bases)
-    best_num_bases[ncomp_i, ] <- as.numeric(penalty_grid[sel_num_bases, ])
+    best_num_bases[ncomp_i, ] <- as.numeric(num_bases_grid[sel_num_bases, ])
 
     # Save the folds-averaged CV error:
     CVEs_ncomp[ncomp_i] <- CVEs_ncomp_bases[sel_num_bases]
@@ -133,7 +170,7 @@ cv_bases_fof_par <- function(X,
   names(CVEs_ncomp) <- paste0("ncomp_", 1:ncomp)
   rownames(best_num_bases) <- paste0("ncomp_", 1:ncomp)
   colnames(MSE_ncomp_fold) <- paste0("fold_", 1:num_folds)
-  colnames(best_num_bases) <- colnames(penalty_grid)
+  colnames(best_num_bases) <- colnames(num_bases_grid)
   rownames(MSE_ncomp_fold) <- paste0("ncomp_", 1:ncomp)
 
   if (stripped) {
@@ -167,7 +204,7 @@ cv_bases_fof_par <- function(X,
                             penalty_X = penalty_X,
                             penalty_Y = penalty_Y,
                             verbose = FALSE,
-                            stripped = stripped
+                            stripped = stripped,
                             ...)
 
     ret <- list(
