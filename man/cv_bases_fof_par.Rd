@@ -20,6 +20,12 @@ cv_bases_fof_par(
   folds = 5,
   verbose = TRUE,
   stripped = TRUE,
+  RPhi = NULL,
+  RPsi = NULL,
+  PX = NULL,
+  PY = NULL,
+  harmaccelLfd_X = NULL,
+  harmaccelLfd_Y = NULL,
   ...
 )
 }
@@ -53,6 +59,18 @@ cv_bases_fof_par(
 \item{verbose}{Logical; if \code{TRUE}, progress messages are displayed during cross-validation. Default is \code{TRUE}.}
 
 \item{stripped}{Logical; if \code{TRUE}, the final model is not included in the output, only cross-validation results. Default is \code{TRUE}.}
+
+\item{RPhi}{Penalty matrix for the predictors. Default is \code{NULL}.}
+
+\item{RPsi}{Penalty matrix for the responses. Default is \code{NULL}.}
+
+\item{PX}{Penalty matrix for the predictors. Default is \code{NULL}.}
+
+\item{PY}{Penalty matrix for the responses. Default is \code{NULL}.}
+
+\item{harmaccelLfd_X}{Object of class \code{fd} representing the harmonic acceleration operator for the predictors. Default is \code{NULL}.}
+
+\item{harmaccelLfd_Y}{Object of class \code{fd} representing the harmonic acceleration operator for the responses. Default is \code{NULL}.}
 
 \item{...}{Additional arguments passed to the \code{ffpls_bs} function.}
 }

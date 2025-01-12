@@ -18,6 +18,12 @@
 #' @param folds Integer or list specifying the cross-validation folds. If an integer, it indicates the number of folds. If a list, it provides predefined fold indices. Default is 5.
 #' @param verbose Logical; if `TRUE`, progress messages are displayed during cross-validation. Default is `TRUE`.
 #' @param stripped Logical; if `TRUE`, the final model is not included in the output, only cross-validation results. Default is `TRUE`.
+#' @param RPhi Penalty matrix for the predictors. Default is `NULL`.
+#' @param RPsi Penalty matrix for the responses. Default is `NULL`.
+#' @param PX Penalty matrix for the predictors. Default is `NULL`.
+#' @param PY Penalty matrix for the responses. Default is `NULL`.
+#' @param harmaccelLfd_X Object of class `fd` representing the harmonic acceleration operator for the predictors. Default is `NULL`.
+#' @param harmaccelLfd_Y Object of class `fd` representing the harmonic acceleration operator for the responses. Default is `NULL`.
 #' @param ... Additional arguments passed to the `ffpls_bs` function.
 #'
 #' @return A list containing:
@@ -51,6 +57,12 @@ cv_bases_fof_par <- function(X,
                              folds = 5,
                              verbose = TRUE,
                              stripped = TRUE,
+                             RPhi = NULL,
+                             RPsi = NULL,
+                             PX = NULL,
+                             PY = NULL,
+                             harmaccelLfd_X = NULL,
+                             harmaccelLfd_Y = NULL,
                              ...) {
 
   tictoc::tic("Crossvalidation")
@@ -121,6 +133,30 @@ cv_bases_fof_par <- function(X,
                          basisobj_Y <- fda_basis_func_Y(rangeval = range(argvals_Y),
                                                         nbasis = num_bases_grid[row_num_bases, "numbases_Y"])
 
+                         if ((basisobj_X$type == "fourier" ) & (is.null(harmaccelLfd_X)) ) {
+
+                           return("Provide the harmonic accelaeration operator for X")
+
+                         }else if ((basisobj_X$type == "fourier" ) & (!is.null(harmaccelLfd_X)) ) {
+
+                           RPhi <- fda::fourierpen(basisobj = basisobj_X, Lfdobj = 0)
+
+                           #  compute the penalty matrix R
+                           PX = fda::eval.penalty(basisobj_X, harmaccelLfd_X)
+                         }
+
+                         if ((basisobj_Y$type == "fourier" ) & (is.null(harmaccelLfd_Y))) {
+
+                           return("Provide the harmonic accelaeration operator for Y")
+
+                         }else if ((basisobj_Y$type == "fourier" ) & (!is.null(harmaccelLfd_Y)) ) {
+
+                           RPsi <- fda::fourierpen(basisobj = basisobj_Y, Lfdobj = 0)
+
+                           #  compute the penalty matrix R
+                           PY = fda::eval.penalty(basisobj_Y, harmaccelLfd_Y)
+                         }
+
                          res_fpls <- ffpls_bs(X = X_fold_train,
                                               Y = Y_fold_train,
                                               argvals_X = argvals_X,
@@ -133,6 +169,10 @@ cv_bases_fof_par <- function(X,
                                               penalty_Y = penalty_Y,
                                               verbose = FALSE,
                                               stripped = stripped,
+                                              RPhi = RPhi,
+                                              RPsi = RPsi,
+                                              PX = PX,
+                                              PY = PY,
                                               ...      )
 
 
@@ -193,6 +233,32 @@ cv_bases_fof_par <- function(X,
     basisobj_Y_best <- fda_basis_func_Y(rangeval = range(argvals_Y),
                                         nbasis = best_num_bases[ncomp, "numbases_Y"])
 
+
+    if ((basisobj_X_best$type == "fourier" ) & (is.null(harmaccelLfd_X)) ) {
+
+      return("Provide the harmonic accelaeration operator for X")
+
+    }else if ((basisobj_X_best$type == "fourier" ) & (!is.null(harmaccelLfd_X)) ) {
+
+      RPhi <- fda::fourierpen(basisobj = basisobj_X_best, Lfdobj = 0)
+
+      #  compute the penalty matrix R
+      PX = fda::eval.penalty(basisobj_X_best, harmaccelLfd_X)
+    }
+
+    if ((basisobj_Y_best$type == "fourier" ) & (is.null(harmaccelLfd_Y))) {
+
+      return("Provide the harmonic accelaeration operator for Y")
+
+    }else if ((basisobj_Y_best$type == "fourier" ) & (!is.null(harmaccelLfd_Y)) ) {
+
+      RPsi <- fda::fourierpen(basisobj = basisobj_Y_best, Lfdobj = 0)
+
+      #  compute the penalty matrix R
+      PY = fda::eval.penalty(basisobj_Y_best, harmaccelLfd_Y)
+    }
+
+
     final_model <- ffpls_bs(X = X,
                             Y = Y,
                             argvals_X = argvals_X,
@@ -205,6 +271,10 @@ cv_bases_fof_par <- function(X,
                             penalty_Y = penalty_Y,
                             verbose = FALSE,
                             stripped = stripped,
+                            RPhi = RPhi,
+                            RPsi = RPsi,
+                            PX = PX,
+                            PY = PY,
                             ...)
 
     ret <- list(
