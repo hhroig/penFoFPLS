@@ -169,8 +169,8 @@ cv_unique_fof_par <- function(X,
     MSE_ncomp_fold[ncomp_i, ] <- MSE_lambda_fold[sel_lambda, ]
 
     # Save times
-    cve_times_ncomp[ncomp_i] <- tictoc::toc(quiet = !verbose)
-
+    elapsed_time <- tictoc::toc(quiet = !verbose)
+    cve_times_ncomp[[paste0("ncomp_", ncomp_i)]] <- elapsed_time[["toc"]][["elapsed"]] - elapsed_time[["tic"]][["elapsed"]]
 
   } # loop in ncomp: number of components
 
