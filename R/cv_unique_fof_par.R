@@ -51,7 +51,6 @@ cv_unique_fof_par <- function(X,
                               PY = NULL,
                               ...) {
 
-  tictoc::tic("Crossvalidation")
 
   # Initialize grid for the first component
   penalty_grid <- expand.grid(penalty_X = penaltyvec_X,
@@ -72,6 +71,11 @@ cv_unique_fof_par <- function(X,
   CVEs_ncomp <- array(data = NA, dim = ncomp) # averaged
   names(CVEs_ncomp) <- paste0("ncomp_", 1:ncomp)
 
+  # Initialize computation times:
+  cve_times_ncomp <- array(data = NA, dim = ncomp)
+  names(cve_times_ncomp) <- paste0("ncomp_", 1:ncomp)
+
+  # Initialize MSEs per fold:
   MSE_ncomp_fold <- matrix(data = NA,
                            nrow = ncomp,
                            ncol = num_folds) # MSE per component per fold
@@ -82,9 +86,14 @@ cv_unique_fof_par <- function(X,
   best_penalties <- matrix(data = NA,
                            nrow = ncomp,
                            ncol = 2)
+  rownames(best_penalties) <- paste0("ncomp_", 1:ncomp)
+  colnames(best_penalties) <- colnames(penalty_grid)
 
 
   for (ncomp_i in 1:ncomp) {
+
+
+    tictoc::tic(paste0("Crossvalidation component # ", ncomp_i))
 
     if (verbose) {
       cat("Component ", ncomp_i, "/", ncomp, "\n")
@@ -159,22 +168,23 @@ cv_unique_fof_par <- function(X,
     # Save MSEs per fold, for the best lambda:
     MSE_ncomp_fold[ncomp_i, ] <- MSE_lambda_fold[sel_lambda, ]
 
+    # Save times
+    cve_times_ncomp[ncomp_i] <- tictoc::toc(quiet = !verbose)
+
 
   } # loop in ncomp: number of components
 
+  # Transform into accumulated times:
+  cve_times_ncomp <- cumsum(cve_times_ncomp)
 
-  names(CVEs_ncomp) <- paste0("ncomp_", 1:ncomp)
-  rownames(best_penalties) <- paste0("ncomp_", 1:ncomp)
-  colnames(MSE_ncomp_fold) <- paste0("fold_", 1:num_folds)
-  colnames(best_penalties) <- colnames(penalty_grid)
-  rownames(MSE_ncomp_fold) <- paste0("ncomp_", 1:ncomp)
+  # fix names:
 
   if (stripped) {
     ret <- list(
       CVEs_ncomp = CVEs_ncomp,
       MSE_ncomp_fold = MSE_ncomp_fold,
       best_penalties = best_penalties,
-      elapsed = tictoc::toc(quiet = !verbose)
+      elapsed = cve_times_ncomp
     )
   }else {
 
@@ -205,7 +215,7 @@ cv_unique_fof_par <- function(X,
       MSE_ncomp_fold = MSE_ncomp_fold,
       best_penalties = best_penalties,
       final_model = final_model,
-      elapsed = tictoc::toc(quiet = !verbose)
+      elapsed = cve_times_ncomp
     )
 
   }

@@ -65,8 +65,6 @@ cv_bases_fof_par <- function(X,
                              harmaccelLfd_Y = NULL,
                              ...) {
 
-  tictoc::tic("Crossvalidation")
-
 
   # Initialize grid for the first component
   num_bases_grid <- expand.grid(numbases_X = num_bases_X,
@@ -87,6 +85,11 @@ cv_bases_fof_par <- function(X,
   CVEs_ncomp <- array(data = NA, dim = ncomp) # averaged
   names(CVEs_ncomp) <- paste0("ncomp_", 1:ncomp)
 
+  # Initialize computation times:
+  cve_times_ncomp <- array(data = NA, dim = ncomp)
+  names(cve_times_ncomp) <- paste0("ncomp_", 1:ncomp)
+
+  # Initialize MSEs per fold:
   MSE_ncomp_fold <- matrix(data = NA,
                            nrow = ncomp,
                            ncol = num_folds) # MSE per component per fold
@@ -97,9 +100,15 @@ cv_bases_fof_par <- function(X,
   best_num_bases <- matrix(data = NA,
                            nrow = ncomp,
                            ncol = 2)
+  rownames(best_num_bases) <- paste0("ncomp_", 1:ncomp)
+  colnames(best_num_bases) <- colnames(num_bases_grid)
 
 
   for (ncomp_i in 1:ncomp) {
+
+
+    tictoc::tic(paste0("Crossvalidation component # ", ncomp_i))
+
 
     if (verbose) {
       cat("Component ", ncomp_i, "/", ncomp, "\n")
@@ -113,81 +122,81 @@ cv_bases_fof_par <- function(X,
       foreach::foreach(row_num_bases = 1:nrow(num_bases_grid),
                        .packages = c("penFoFPLS"),
                        .combine = 'c' ) %dopar%
-                       {
+      {
 
-                         # MSE_lambda_fold <- matrix(NA, nrow = nrow(num_bases_grid), ncol = num_folds)
-                         # for (i in 1:num_folds) {
-                         #   for (row_num_bases in 1:nrow(num_bases_grid)) {
+        # MSE_lambda_fold <- matrix(NA, nrow = nrow(num_bases_grid), ncol = num_folds)
+        # for (i in 1:num_folds) {
+        #   for (row_num_bases in 1:nrow(num_bases_grid)) {
 
-                         # build train
-                         Y_fold_train <- Y[-folds[[i]], , drop = F]
-                         X_fold_train <- X[-folds[[i]], , drop = F]
+        # build train
+        Y_fold_train <- Y[-folds[[i]], , drop = F]
+        X_fold_train <- X[-folds[[i]], , drop = F]
 
-                         # build test:
-                         Y_fold_test <- Y[folds[[i]], , drop = F]
-                         X_fold_test <- X[folds[[i]], , drop = F]
+        # build test:
+        Y_fold_test <- Y[folds[[i]], , drop = F]
+        X_fold_test <- X[folds[[i]], , drop = F]
 
-                         basisobj_X <- fda_basis_func_X(rangeval = range(argvals_X),
-                                                        nbasis = num_bases_grid[row_num_bases, "numbases_X"])
+        basisobj_X <- fda_basis_func_X(rangeval = range(argvals_X),
+                                       nbasis = num_bases_grid[row_num_bases, "numbases_X"])
 
-                         basisobj_Y <- fda_basis_func_Y(rangeval = range(argvals_Y),
-                                                        nbasis = num_bases_grid[row_num_bases, "numbases_Y"])
+        basisobj_Y <- fda_basis_func_Y(rangeval = range(argvals_Y),
+                                       nbasis = num_bases_grid[row_num_bases, "numbases_Y"])
 
-                         if ((basisobj_X$type == "fourier" ) & (is.null(harmaccelLfd_X)) ) {
+        if ((basisobj_X$type == "fourier" ) & (is.null(harmaccelLfd_X)) ) {
 
-                           return("Provide the harmonic accelaeration operator for X")
+          return("Provide the harmonic accelaeration operator for X")
 
-                         }else if ((basisobj_X$type == "fourier" ) & (!is.null(harmaccelLfd_X)) ) {
+        }else if ((basisobj_X$type == "fourier" ) & (!is.null(harmaccelLfd_X)) ) {
 
-                           RPhi <- fda::fourierpen(basisobj = basisobj_X, Lfdobj = 0)
+          RPhi <- fda::fourierpen(basisobj = basisobj_X, Lfdobj = 0)
 
-                           #  compute the penalty matrix R
-                           PX = fda::eval.penalty(basisobj_X, harmaccelLfd_X)
-                         }
+          #  compute the penalty matrix R
+          PX = fda::eval.penalty(basisobj_X, harmaccelLfd_X)
+        }
 
-                         if ((basisobj_Y$type == "fourier" ) & (is.null(harmaccelLfd_Y))) {
+        if ((basisobj_Y$type == "fourier" ) & (is.null(harmaccelLfd_Y))) {
 
-                           return("Provide the harmonic accelaeration operator for Y")
+          return("Provide the harmonic accelaeration operator for Y")
 
-                         }else if ((basisobj_Y$type == "fourier" ) & (!is.null(harmaccelLfd_Y)) ) {
+        }else if ((basisobj_Y$type == "fourier" ) & (!is.null(harmaccelLfd_Y)) ) {
 
-                           RPsi <- fda::fourierpen(basisobj = basisobj_Y, Lfdobj = 0)
+          RPsi <- fda::fourierpen(basisobj = basisobj_Y, Lfdobj = 0)
 
-                           #  compute the penalty matrix R
-                           PY = fda::eval.penalty(basisobj_Y, harmaccelLfd_Y)
-                         }
+          #  compute the penalty matrix R
+          PY = fda::eval.penalty(basisobj_Y, harmaccelLfd_Y)
+        }
 
-                         res_fpls <- ffpls_bs(X = X_fold_train,
-                                              Y = Y_fold_train,
-                                              argvals_X = argvals_X,
-                                              argvals_Y = argvals_Y,
-                                              ncomp = ncomp_i,
-                                              center = center,
-                                              basisobj_X = basisobj_X,
-                                              basisobj_Y = basisobj_Y,
-                                              penalty_X = penalty_X,
-                                              penalty_Y = penalty_Y,
-                                              verbose = FALSE,
-                                              stripped = stripped,
-                                              RPhi = RPhi,
-                                              RPsi = RPsi,
-                                              PX = PX,
-                                              PY = PY,
-                                              ...      )
-
-
-                         # MSE_lambda_fold[row_lambda , i] <-
-                         num_int_1d(argvals = argvals_Y,
-                                    f_obs = colMeans( (Y_fold_test -
-                                                         stats::predict(object = res_fpls,
-                                                                        newdata = X_fold_test)[, , ncomp_i]  )^2 ) )
+        res_fpls <- ffpls_bs(X = X_fold_train,
+                             Y = Y_fold_train,
+                             argvals_X = argvals_X,
+                             argvals_Y = argvals_Y,
+                             ncomp = ncomp_i,
+                             center = center,
+                             basisobj_X = basisobj_X,
+                             basisobj_Y = basisobj_Y,
+                             penalty_X = penalty_X,
+                             penalty_Y = penalty_Y,
+                             verbose = FALSE,
+                             stripped = stripped,
+                             RPhi = RPhi,
+                             RPsi = RPsi,
+                             PX = PX,
+                             PY = PY,
+                             ...      )
 
 
+        # MSE_lambda_fold[row_lambda , i] <-
+        num_int_1d(argvals = argvals_Y,
+                   f_obs = colMeans( (Y_fold_test -
+                                        stats::predict(object = res_fpls,
+                                                       newdata = X_fold_test)[, , ncomp_i]  )^2 ) )
 
-                         #   } # loop row_lambda
-                         # } # loop fold
 
-                       } # nested loop parallel
+
+        #   } # loop row_lambda
+        # } # loop fold
+
+      } # nested loop parallel
 
 
     # Averaged MSE_fold:
@@ -203,22 +212,24 @@ cv_bases_fof_par <- function(X,
     # Save MSEs per fold, for the best lambda:
     MSE_ncomp_fold[ncomp_i, ] <- MSE_lambda_fold[sel_num_bases, ]
 
+    # Save times
+    cve_times_ncomp[ncomp_i] <- tictoc::toc(quiet = !verbose)
+
 
   } # loop in ncomp: number of components
 
 
-  names(CVEs_ncomp) <- paste0("ncomp_", 1:ncomp)
-  rownames(best_num_bases) <- paste0("ncomp_", 1:ncomp)
-  colnames(MSE_ncomp_fold) <- paste0("fold_", 1:num_folds)
-  colnames(best_num_bases) <- colnames(num_bases_grid)
-  rownames(MSE_ncomp_fold) <- paste0("ncomp_", 1:ncomp)
+  # Transform to accumulated times:
+  cve_times_ncomp <- cumsum(cve_times_ncomp)
+
+
 
   if (stripped) {
     ret <- list(
       CVEs_ncomp = CVEs_ncomp,
       MSE_ncomp_fold = MSE_ncomp_fold,
       best_num_bases = best_num_bases,
-      elapsed = tictoc::toc(quiet = !verbose)
+      elapsed = cve_times_ncomp
     )
   }else {
 
@@ -282,7 +293,7 @@ cv_bases_fof_par <- function(X,
       MSE_ncomp_fold = MSE_ncomp_fold,
       best_num_bases = best_num_bases,
       final_model = final_model,
-      elapsed = tictoc::toc(quiet = !verbose)
+      elapsed = cve_times_ncomp
     )
 
   }
